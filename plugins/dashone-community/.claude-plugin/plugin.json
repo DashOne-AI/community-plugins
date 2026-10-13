@@ -4,5 +4,8 @@
   "description": "General-purpose skills from DashOne that work for any team: incident diagnosis, handoff notes, autonomous-run prompts, spec writing, document reading and landing page audits.",
   "author": {
     "name": "DashOne"
-  }
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/DashOne-AI/community-plugins",
+  "repository": "https://github.com/DashOne-AI/community-plugins"
 }

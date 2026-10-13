@@ -12,7 +12,8 @@
       "name": "dashone-community",
       "source": "./plugins/dashone-community",
       "description": "General-purpose skills from DashOne that work for any team: incident diagnosis, handoff notes, autonomous-run prompts, spec writing, document reading and landing page audits.",
-      "version": "0.1.0"
+      "version": "0.1.0",
+      "license": "MIT"
     }
   ]
 }

@@ -5,7 +5,7 @@ Skills from DashOne that work for any team. Install the whole plugin, not skill 
 ## Install
 
 ```
-/plugin marketplace add DashOne-AI/dashone-community-plugins
+/plugin marketplace add DashOne-AI/community-plugins
 /plugin install dashone-community@dashone-community-plugins
 ```
 
@@ -27,4 +27,4 @@ Plugin `dashone-community`:
 - All skills are written in English and work with requests in Spanish or English.
 - These skills carry no client data and no credentials.
 - `graphify` is a third-party skill and is not bundled here. Install it from its own source if you want it next to these.
-- License: to be decided by DashOne before this repo is published.
+- License: MIT. See `LICENSE`.
