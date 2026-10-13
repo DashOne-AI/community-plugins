@@ -24,7 +24,7 @@ Ask only what you cannot infer, and ask it once:
    not default to.
 2. **Anything off-limits?** Confirm whether submitting forms or triggering
    backend actions is acceptable. Never enter real personal data, real payment
- details, or credentials, use an obviously fictional test business throughout,
+   details, or credentials, use an obviously fictional test business throughout,
    and stop before any irreversible action (purchase, real account creation,
    sending a message to a third party).
 
@@ -87,7 +87,7 @@ Probe deliberately:
 
 - **Required fields**: is the requirement real? Enter obviously invalid input
   ("none", "n/a", nonsense) and see whether it passes. A required field that
- validates nothing is the worst of both worlds, it repels people who read the
+  validates nothing is the worst of both worlds, it repels people who read the
   asterisk and protects no one who doesn't.
 - **Confirmation screens**: do they claim results the system cannot have? A
   screen that reports it "scanned your site and learned your prices" after being
@@ -216,7 +216,7 @@ is the artifact the team actually works from.
 - **Stopping at the first blocker.** When a defect blocks further testing, record
   it, then work around it (reload, different entry point, fresh state) to cover
   the rest of the page. If you truly cannot, say which items are unverified and
- why, that gap is itself a finding.
+  why, that gap is itself a finding.
 - **Generic persona reactions.** "A user might be confused" is not a finding.
   The persona's profession supplies the objections; use them.
 - **Cosmetic-first ordering.** Color and copy polish rank below a dead button,

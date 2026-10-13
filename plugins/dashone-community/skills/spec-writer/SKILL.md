@@ -6,7 +6,7 @@ description: >
   turn a vague idea into a structured task, create an AC/BR/tech-spec document, prepare a task
   for Claude Code, or says things like "help me spec this", "write the spec for", "define this
   feature", "I want Claude Code to do X", "we need to implement Y", or "I need the spec for".
- Trigger even if the user just describes a feature informally, convert it into a proper spec.
+  Trigger even if the user just describes a feature informally, convert it into a proper spec.
   Always use this skill before writing or reviewing specs, never skip it.
 ---
 
@@ -155,9 +155,9 @@ interface ResponseOutput {
 Skeleton:
 ```ts
 test('AC-1: <slug>', async ({ page }) => {
- // arrange, seed state, authenticate, navigate
- // act , perform the user action
- // assert, observable outcome matches AC
+  // arrange, seed state, authenticate, navigate
+  // act , perform the user action
+  // assert, observable outcome matches AC
 });
 ```
 

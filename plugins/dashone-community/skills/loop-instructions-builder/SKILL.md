@@ -69,7 +69,7 @@ Same language as the plan/conversation. Fixed shape, but every line's content is
    - Exact steps for you to resolve it
    - What I will keep doing in parallel in the meantime
    ```
- (Translate the heading/labels to the plan's language.) The point of this block is that it's scoped to the one blocked sub-step, Claude keeps working on everything else in parallel rather than treating one blocker as a reason to stop entirely.
+   (Translate the heading/labels to the plan's language.) The point of this block is that it's scoped to the one blocked sub-step, Claude keeps working on everything else in parallel rather than treating one blocker as a reason to stop entirely.
 5. **Testing-rigor instruction**: real end-to-end verification, not a single happy-path API call. Push specifically for edge cases the plan's own verification section implies. If achieving E2E would otherwise require impersonating the user (their login, their session), redirect it: use an API-issued token/test account instead, and never fake a check that couldn't actually be run.
 6. **Anti-blanket clause**: the authorization in this prompt covers exactly what's listed in (1); anything new that comes up mid-run in the "needs a specific ask" bucket still gets asked about specifically, on the spot.
 7. **Closing summary request**: ask for: what got done and verified, what's sitting in the BLOCKED section waiting on the user, and the exact rollback if something needs to be undone.
