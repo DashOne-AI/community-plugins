@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/logo.png" alt="DashOne" width="120"></p>
+
 # DashOne Community Plugins
 
 Skills from DashOne that work for any team. Install the whole plugin, not skill by skill.
