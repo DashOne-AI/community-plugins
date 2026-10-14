@@ -18,6 +18,7 @@ Plugin `dashone-community`:
 | `diagnose` | Diagnoses a production bug, alert or incident: root cause with evidence, impact, severity, priority and a fix plan. |
 | `handoff` | Appends a handoff entry to `Handoff.md` so work can resume in a fresh session after `/clear`. |
 | `loop-instructions-builder` | Turns an approved plan into an execution-authorization prompt, checked against Claude Code's real hard limits. |
+| `loop-from-plan` | Takes an approved plan, creates one GitHub issue per phase, and launches its autonomous execution with `/loop`. Pairs with `loop-instructions-builder`. |
 | `spec-writer` | Turns an idea into a spec with user stories and acceptance criteria, ready for an AI agent. |
 | `doc-reader` | Finds and reads any document aloud-friendly, full or summarized. |
 | `landing-page-conversion-analysis` | Audits a landing page by walking it as real buyer personas and delivers prioritized findings. |
