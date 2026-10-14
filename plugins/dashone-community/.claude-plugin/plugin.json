@@ -1,6 +1,6 @@
 {
   "name": "dashone-community",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "General-purpose skills from DashOne that work for any team: incident diagnosis, handoff notes, autonomous-run prompts, spec writing, document reading and landing page audits.",
   "author": {
     "name": "DashOne"

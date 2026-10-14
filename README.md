@@ -22,9 +22,20 @@ Plugin `dashone-community`:
 | `doc-reader` | Finds and reads any document aloud-friendly, full or summarized. |
 | `landing-page-conversion-analysis` | Audits a landing page by walking it as real buyer personas and delivers prioritized findings. |
 
+## Optional companion: graphify
+
+No skill here requires it. `graphify` turns a folder or repo into a navigable knowledge graph and pairs well with `diagnose` and `spec-writer` when you need architecture context.
+It is third-party (Apache-2.0 and MIT, [Graphify-Labs/graphify](https://github.com/Graphify-Labs/graphify)) and is not bundled, so you get its updates from the source:
+
+```
+uv tool install --upgrade graphifyy
+graphify install
+```
+
+Check it with `graphify --help`. Skip this section if you do not need codebase graphs.
+
 ## Notes
 
 - All skills are written in English and work with requests in Spanish or English.
 - These skills carry no client data and no credentials.
-- `graphify` is a third-party skill and is not bundled here. Install it from its own source if you want it next to these.
 - License: MIT. See `LICENSE`.

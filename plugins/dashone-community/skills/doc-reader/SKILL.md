@@ -17,7 +17,7 @@ Work silently. Do not narrate the search. Try in this order:
 4. Claude.ai Project knowledge: search the project by document name or topic, then read it.
 5. Google Drive: search files by name keywords, then read the file content (or download for binaries).
 6. Email: search threads by subject or sender, then read the attachment or body.
-7. Issue tracker (for example Linear): list or get documents, or get the issue if the user names one (for example DAS-123).
+7. Issue tracker (for example Linear): list or get documents, or get the issue if the user names one (for example PROJ-123).
 8. Public URL: web fetch.
 9. The user's computer: if device tools are present, list connected folders and stage the file. If not, tell the user to open the chat in the desktop app or attach the file.
 10. Past chats: search conversations with content words from the name.
