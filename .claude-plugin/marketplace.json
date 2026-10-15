@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "General-purpose skills from DashOne that work for any team: incident diagnosis, handoff notes, autonomous-run prompts, plan-to-loop execution, spec writing, document reading and landing page audits.",
-    "version": "0.2.0"
+    "version": "0.2.1"
   },
   "plugins": [
     {
       "name": "dashone-community",
       "source": "./plugins/dashone-community",
       "description": "General-purpose skills from DashOne that work for any team: incident diagnosis, handoff notes, autonomous-run prompts, plan-to-loop execution, spec writing, document reading and landing page audits.",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "license": "MIT"
     }
   ]
