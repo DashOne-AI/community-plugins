@@ -108,7 +108,26 @@ The builder's prompt is written as a one-shot authorization. A /loop prompt re-f
 
    If your setup has a hook or rule that warns after repeated gate failures, route the escalation to the escalation agent. A slash command the user has to type, such as a manual model switch, cannot run inside an autonomous loop.
 
-Keep everything else from the builder's prompt verbatim (carve-outs, sequencing, anti-blanket clause). Language: the three template blocks above are written in English. If the plan or conversation is in another language, translate the blocks into that language before embedding them in the prompt.
+6. **Checkpoint and resume.** Embed this block so every iteration, including the first one after a `/compact`, follows the "Pauses and compaction" section below. Fill `<plan path>` with the plan file (or `.loop/plan.md`, see that section):
+
+   ```
+   ### Checkpoint and resume (every iteration)
+   First, before anything else: read .loop/checkpoint.md and the plan it points
+   to (<plan path>). If the checkpoint exists, verify that its current step
+   matches the plan and the real state of its issue(s). If they match, continue
+   from its "Next exact action". If they do not match, stop and ask the user;
+   do not guess.
+   At every pause, in this order: finish the step in progress (never leave it
+   half done), update the issues as above, overwrite .loop/checkpoint.md
+   (written at, plan path, current step and state, completed steps, blocked
+   items, decisions and why, next exact action, issue/PR/plan links), and only
+   then tell the user: "You can compact now: /compact keep the plan, the
+   current step, the decisions and the issue and PR IDs".
+   ```
+
+   If the `daily-driver:handoff` skill is available in the session, add one line to the block: "After writing the checkpoint, save the handoff note with daily-driver:handoff, pointing to .loop/checkpoint.md."
+
+Keep everything else from the builder's prompt verbatim (carve-outs, sequencing, anti-blanket clause). Language: the template blocks above are written in English. If the plan or conversation is in another language, translate the blocks into that language before embedding them in the prompt.
 
 
 ## Step 4: Launch /loop
@@ -120,6 +139,82 @@ Invoke the `loop` skill (Skill tool) with args = `[interval] <adapted prompt>`:
 
 Before launching, show the user, **outside** any code block, a summary covering: what's authorized, what's carved out as theirs (if anything), the issues created or reused per phase (`repo#number` list, flagging any cross-repo pairs), and the ACs that will stop the loop. Then launch immediately; do not ask for confirmation (the user invoked this skill precisely to skip that hop). Exception: if Step 1's analysis found a hard-blocked step that the ENTIRE plan depends on, or Step 2 could not get a usable main repo (`gh` unauthenticated, target not a git repo), don't start the loop. Surface the blocker first and stop.
 
+## Pauses and compaction
+
+A plan run in a loop lasts long enough to fill the conversation context. This section makes every pause a safe point to compact, so the plan, the progress and the loop's behavior survive `/compact`. It adds no pause or termination condition and changes none of the existing ones.
+
+**What a skill cannot do.** `/compact` is a client command that only the user types. Neither this skill nor the loop can run it, through any tool or channel, and no instruction may claim otherwise. What the loop can do is keep its state outside the context and tell the user when compacting is safe.
+
+**What counts as a pause.** Any point where the loop already stops working and waits: the end of each iteration, before the next wakeup fires, including an iteration that ends with items BLOCKED waiting on the user. The final stop (ACs verified or everything blocked) also writes a checkpoint, so a later session can see where it ended.
+
+### 1. Progress lives outside the context
+
+Two things already survive compaction and stay exactly as they are: the GitHub issues (In Progress when a phase starts, closed with evidence when it is verified) and the `/loop` prompt, which is re-sent on every wakeup with the authorization, the ACs, the slice → issue mapping and the agent per phase. Neither holds what happens inside a phase: the decisions taken and the exact next action. That goes into a checkpoint file:
+
+- Path: `.loop/checkpoint.md` at the root of the main repo (`git rev-parse --show-toplevel`). If `git check-ignore .loop/checkpoint.md` says it is not ignored, add `.loop/` to the root `.gitignore`: it is working state and never goes into a commit or a PR.
+- If the plan exists only in the conversation (pasted, not a plan-mode file or a file in a repo), copy it verbatim to `.loop/plan.md` before building the Step 3 prompt, without changing its format. Otherwise, after compaction there is no plan to read.
+- Overwrite the checkpoint at every pause. It is the current state; the history lives in the issues and commits.
+
+```markdown
+# Loop checkpoint
+- Written: <YYYY-MM-DD HH:MM TZ>
+- Plan: <path to the plan file, or .loop/plan.md>
+- Current step: Phase <N>, <title> (<owner/repo>#<issue>)
+- State: in progress | closed
+- Completed: Phase 1 (<owner/repo>#<N>), ...
+- Blocked: <phase, diagnosis, what is expected from the user> | none
+
+## Decisions
+- <decision>: <why>
+
+## Next exact action
+<one concrete action (command, file, check), enough for a reader with no memory of this conversation>
+
+## Links
+- Issues: <owner/repo>#<N>, ...
+- PRs: <owner/repo>#<N>, ...
+- Plan document: <URL or path>
+```
+
+`State` is the state of the current phase: `closed` when its issue(s) are closed with evidence, `in progress` when the phase spans more than one iteration. Even then, the unit of work of the iteration that just ended is finished (order below).
+
+### 2. Fixed order at every pause
+
+1. Finish the work in progress: the iteration's item reaches a verified state, or it is marked BLOCKED with its diagnosis. Never pause halfway through an edit, a migration or any half-applied change.
+2. Update the plan's progress the way this skill already does: move the issue to In Progress, or close it with the evidence. Same format, same markers.
+3. Write the checkpoint (section 1), and the handoff note if it applies (section 3).
+4. Only then tell the user "You can compact now", with the suggested text (section 5), as the last thing in the iteration's message.
+
+If any of these steps fails (for example, the checkpoint cannot be written), say so and do not send the notice.
+
+### 3. Handoff note re-injected after /compact
+
+If the `daily-driver:handoff` skill is available in the session, use it to save the note that is re-injected after `/compact`, pointing to `.loop/checkpoint.md` and repeating its next exact action. Do not build another mechanism for that (extra hooks, extra files). The `handoff` skill in this plugin is not a replacement: it appends to `Handoff.md` for `/clear`, and nothing re-injects that file automatically.
+
+If `daily-driver:handoff` is not available, the checkpoint from section 1 is the source. The Step 3 block in the `/loop` prompt is what makes the next iteration read it.
+
+### 4. Resuming (at start or after compaction)
+
+First thing in every iteration, before the issue verification from Step 3:
+
+1. Read `.loop/checkpoint.md` and the plan it points to. If there is no checkpoint, this is the first iteration: continue normally.
+2. Verify that the checkpoint's current step matches the plan and the real state: the phase exists in the plan, its issue state matches (`gh issue view`), and the branches, commits and PRs it names exist.
+3. If they match, continue from "Next exact action".
+4. If they do not match (phase missing from the plan, issue closed while the checkpoint says in progress or the other way around, missing commits), stop and ask the user, quoting both versions. Do not guess which one is right and do not touch code until the user answers; until then it is BLOCKED waiting on the user, under the loop's existing rules.
+
+### 5. Suggested text for the user
+
+Write it in the user's language:
+
+- English: `/compact keep the plan, the current step, the decisions and the issue and PR IDs`
+- Spanish: `/compact conserva el plan, el paso actual, las decisiones y los IDs de issues y PR`
+
+### 6. Forbidden
+
+- Relying on auto-compact. It can fire at any moment, mid-step and without notice; the checkpoint written at every pause is what protects the loop, whoever triggers the compaction.
+- Keeping the progress only in the chat (a status message, a plan that was pasted but never saved to a file).
+- Compacting, or telling the user it is safe to compact, with a step half done. If the user wants to compact mid-iteration, finish the step and write the checkpoint first.
+
 ## Failure modes to avoid
 
 - Reusing a prior run's authorization wording instead of re-analyzing this plan.
@@ -130,3 +225,6 @@ Before launching, show the user, **outside** any code block, a summary covering:
 - Creating a secondary-repo issue without cross-referencing it back to the main-repo issue (or vice versa). An orphaned issue that doesn't say which slice or plan it belongs to defeats the point of tracking.
 - Treating issue creation as optional or "nice to have if there's time". Every slice needs its issue(s) before the loop launches, not retrofitted after the fact once code is already moving.
 - Launching the loop without embedding the slice → issue mapping in its prompt. Without it, no iteration has anything concrete to verify against.
+- Writing that the skill or the loop runs `/compact`. Only the user can.
+- Telling the user it is safe to compact before the checkpoint is written, or with a step half done.
+- Launching the loop without the checkpoint-and-resume block, or resuming after a compaction from memory instead of from the checkpoint.
