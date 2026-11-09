@@ -25,6 +25,21 @@ Plugin `dashone-community`:
 | `doc-reader` | Finds and reads any document aloud-friendly, full or summarized. |
 | `landing-page-conversion-analysis` | Audits a landing page by walking it as real buyer personas and delivers prioritized findings. |
 
+## Plugin project-management
+
+A living Project Index for Claude: one published artifact with a shared database that catalogs everything a project holds by domain, with favorites, an icon and color per artifact kind, and an optional Linear daily status and board. Plus a client status update skill that writes the weekly client update or the daily snapshot.
+
+| Skill | What it does |
+|---|---|
+| `project-index-builder` | Builds the Project Index from the project's docs, artifacts, repos, Drive and meetings. Ships a white-label page template in `assets/template.html`. |
+| `project-index-manager` | Finds, registers, updates, favorites and audits records in an existing index, and answers "what is urgent today" from the daily status. |
+| `client-status-update` | Weekly client update (doc plus message) from Linear, GitHub and Drive with a gap check, or the daily internal snapshot written to the index. |
+
+```
+/plugin marketplace add DashOne-AI/community-plugins
+/plugin install project-management@dashone-community-plugins
+```
+
 ## Plugin project-radar
 
 A live Linear-backed project radar for Claude: a dashboard artifact plus setup, sync, daily brief and update skills, configured with one private file per account. Source: [DashOne-AI/project-radar](https://github.com/DashOne-AI/project-radar).
