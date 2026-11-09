@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "General-purpose skills from DashOne that work for any team: incident diagnosis, handoff notes, autonomous-run prompts, plan-to-loop execution, spec writing, document reading and landing page audits.",
-    "version": "0.2.2"
+    "version": "0.3.0"
   },
   "plugins": [
     {
@@ -13,6 +13,16 @@
       "source": "./plugins/dashone-community",
       "description": "General-purpose skills from DashOne that work for any team: incident diagnosis, handoff notes, autonomous-run prompts, plan-to-loop execution, spec writing, document reading and landing page audits.",
       "version": "0.2.2",
+      "license": "MIT"
+    },
+    {
+      "name": "project-radar",
+      "source": {
+        "source": "github",
+        "repo": "DashOne-AI/project-radar"
+      },
+      "description": "Live Linear-backed project radar for Claude: dashboard artifact plus setup, sync, brief and update skills. One private config per account.",
+      "version": "1.0.0",
       "license": "MIT"
     }
   ]

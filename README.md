@@ -25,6 +25,15 @@ Plugin `dashone-community`:
 | `doc-reader` | Finds and reads any document aloud-friendly, full or summarized. |
 | `landing-page-conversion-analysis` | Audits a landing page by walking it as real buyer personas and delivers prioritized findings. |
 
+## Plugin project-radar
+
+A live Linear-backed project radar for Claude: a dashboard artifact plus setup, sync, daily brief and update skills, configured with one private file per account. Source: [DashOne-AI/project-radar](https://github.com/DashOne-AI/project-radar).
+
+```
+/plugin marketplace add DashOne-AI/community-plugins
+/plugin install project-radar@dashone-community-plugins
+```
+
 ## Optional companion: graphify
 
 No skill here requires it. `graphify` turns a folder or repo into a navigable knowledge graph and pairs well with `diagnose` and `spec-writer` when you need architecture context.
