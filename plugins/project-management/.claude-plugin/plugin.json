@@ -1,0 +1,11 @@
+{
+  "name": "project-management",
+  "version": "0.3.0",
+  "description": "Project management skills: a living Project Index (builder and manager) with a Linear daily status, and client-ready status updates.",
+  "author": {
+    "name": "DashOne"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/DashOne-AI/community-plugins",
+  "repository": "https://github.com/DashOne-AI/community-plugins"
+}
