@@ -18,6 +18,7 @@ Plugin `dashone-community`:
 | Skill | What it does |
 |---|---|
 | `diagnose` | Diagnoses a production bug, alert or incident: root cause with evidence, impact, severity, priority and a fix plan. |
+| `linear-plan` | Plans a piece of work on Opus 5.5 or Fable: 3 to 10 gap-closing questions, `diagnose` first when it is a problem, phases for epic-size work, acceptance criteria, and a Linear issue with sub-issues plus the plan as a Linear document. Minimizes what the human implementer has to do. |
 | `handoff` | Appends a handoff entry to `Handoff.md` so work can resume in a fresh session after `/clear`. |
 | `loop-instructions-builder` | Turns an approved plan into an execution-authorization prompt, checked against Claude Code's real hard limits. |
 | `loop-from-plan` | Takes an approved plan, creates one GitHub issue per phase, and launches its autonomous execution with `/loop`. Pairs with `loop-instructions-builder`. |

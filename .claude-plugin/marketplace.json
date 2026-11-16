@@ -4,15 +4,15 @@
     "name": "DashOne"
   },
   "metadata": {
-    "description": "General-purpose skills from DashOne that work for any team: incident diagnosis, handoff notes, autonomous-run prompts, plan-to-loop execution, spec writing, document reading and landing page audits. Also: a living project index with daily status (project-management) and a Linear project radar (project-radar).",
-    "version": "0.4.0"
+    "description": "General-purpose skills from DashOne that work for any team: incident diagnosis, planning into Linear, handoff notes, autonomous-run prompts, plan-to-loop execution, spec writing, document reading and landing page audits. Also: a living project index with daily status (project-management) and a Linear project radar (project-radar).",
+    "version": "0.5.0"
   },
   "plugins": [
     {
       "name": "dashone-community",
       "source": "./plugins/dashone-community",
-      "description": "General-purpose skills from DashOne that work for any team: incident diagnosis, handoff notes, autonomous-run prompts, plan-to-loop execution, spec writing, document reading and landing page audits.",
-      "version": "0.2.2",
+      "description": "General-purpose skills from DashOne that work for any team: incident diagnosis, planning into Linear, handoff notes, autonomous-run prompts, plan-to-loop execution, spec writing, document reading and landing page audits.",
+      "version": "0.3.0",
       "license": "MIT"
     },
     {
