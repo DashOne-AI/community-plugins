@@ -9,7 +9,11 @@ Build a published artifact (page plus shared database) that works as a living in
 
 Answer in the user's language. To operate an index that already exists, use the `project-index-manager` skill.
 
-Reference implementation: `assets/template.html`, next to this file. Read it, copy its code and change only `BRAND`, `LAYERS` and `DOMS`. It already implements the layout, favorites, details panel, search, Daily status and Board described below; it does not yet implement the per-kind icons and colors of section 5a, so add them. If a change of structure or style is requested on an index, apply it to this skill and the template too, so the next index is born the same way.
+Goal: do as much as possible in one run. Read every reachable source without asking, register everything that clearly belongs, and leave the user only the decisions that are genuinely theirs (doubtful items, pasting instructions, approving scheduled tasks).
+
+**Tool names.** This skill says `Artifact` and `ArtifactData`. When the session instead has `mcp__claude-artifacts__*` tools, map them: list artifacts → `list_artifacts` (`query`, `type`, `cursor`); artifact types → `list_types`; read state → `get_artifact`; publish the page → `publish_files` (or `publish_version`); declare capabilities → `declare_capabilities`; write records → `db_write` (`ops` with `set`/`merge`/`update`, path `items/<doc_id>`); read records → `db_list` / `db_get` (`asLevel: "view"` to test a reader). Order for a new page: publish first, then declare capabilities (the declaration republishes the page), then write records.
+
+Reference implementation: `assets/template.html`, next to this file. Read it, copy its code and change only `BRAND`, `LAYERS` and `DOMS`. It already implements everything described below: layout, favorites, details panel, search, per-kind icons and colors (5a), Daily status and Board. Drop the `status` block from `BRAND` when there is no Linear project. If a change of structure or style is requested on an index, apply it to this skill and the template too, so the next index is born the same way.
 
 ## 1. Default scope
 Index whatever is where the skill runs, without asking permission to read:
@@ -17,7 +21,11 @@ Index whatever is where the skill runs, without asking permission to read:
 2. Synced or connected sources: repo (README, folder tree, docs, minutes), Drive (folders and files), Linear or another tracker (as one entry, not its tickets), the team's connected folders.
 3. Published artifacts in the account related to the project (`Artifact` with `action: list`; filter by title and by links that appear in the project docs).
 4. Links mentioned in the project docs (earlier indexes, handoffs, instructions).
-5. If the attached project is empty (no docs, files or sources) and there is no repo, tracker or Drive folder with the project's name, build the inventory from the account's artifacts and the project's conversations. Say so in the close.
+5. Every conversation of the project, always (not only when the project is empty): page through `recent_chats` (it is scoped to the project) and register each relevant chat as `tipo: Meeting` in the sources domain, with its last update time. Also run `conversation_search` for `claude.ai/artifact` and for the project's names inside those chats to harvest artifact links.
+6. Artifacts moved into the project are not returned by `project_info`. Find them by: links harvested from the project's chats and docs; `list_artifacts` queried by the project name and by every alias found in memory (renamed projects, related products) and paged to the end; links inside artifacts already found (a whiteboard or index that links to others). An artifact that `get_artifact` reports as `outside_organization` cannot be read: register it anyway with an honest descriptive title, empty `tipo` and the note "title and type to verify".
+7. The tracker: search Linear projects and documents by the project name and its aliases. If a Linear project of its own exists, register it and turn on Daily status and Board (5b) without asking. Register related projects' Linear entries only when the project's material links to them.
+8. The team's context repo, if memory or the project docs name one (for example a private context repo reached through a GitHub connector such as Composio when the git proxy cannot attach it): look for the project's folder, register its files with their frontmatter, and if there is no folder say so in the close.
+If the attached project is empty and nothing else turns up, build the inventory from the account's artifacts and the project's conversations, and say so in the close.
 If the user names another scope (another folder, project or repo), use it instead of the default.
 
 Ask only what you cannot infer, in one batch: the project name for the title, a logo or colors if they want their own brand, and whether there are audiences to separate (for example client vs internal). Decide everything else and state it as an assumption. Use the project name exactly as the user says it; if they rename it later, change `BRAND.name`, the `<title>` and the texts that repeat it, but leave the titles of indexed artifacts alone (they are their real names).
@@ -26,6 +34,7 @@ Ask only what you cannot infer, in one batch: the project name for the title, a 
 Walk the sources and build a flat list. For each element gather only what you can verify:
 - title, url (empty if it lives only inside the Claude Project), type, author or owner, creation and last-modified dates (with time when the tool gives it), visibility (public, organization, private) only if the tool says so.
 - Read the frontmatter of repo docs when it exists (title, description, audience, owner, last review, visual version).
+- Doubtful items: anything that may or may not belong to the project (same family of products, shared people, ambiguous title) goes into a short list for the close, with one line of why. Do not drop it silently and do not register it without saying so.
 - Deduplicate: same url, copies with the same title (mark the copy as `anterior` and say so), superseded versions (`estado: anterior`).
 
 Never invent metadata. What you cannot confirm stays empty and the page shows it as "To verify". A classification opinion is yours and you declare it; data from a tool is a fact.
@@ -50,10 +59,10 @@ Each domain has a short name, a question it answers ("What was agreed?"), its la
 Doubtful cases: pick one and list it in the final answer as a judgment, so the user can correct it.
 
 ## 4. Data model (collection `items`)
-One document per element. `doc_id` = slug `<dominio>-<titulo>-<last 8 characters of the url>`, lowercase, letters, numbers and hyphens only.
+One document per element. `doc_id` = slug `<dominio>-<titulo>-<last 8 characters of the url>`, lowercase, letters, numbers and hyphens only. Generate the ids and the whole `ops` payload with a short script (strip accents, slug, cut the title part to 50 characters, take the url's last 8 characters) instead of writing them by hand.
 
 Field names are fixed keys of the schema shared by the page and `project-index-manager`; keep them exactly as written, even though they are in Spanish:
-`dominio` (domain id), `titulo` (title), `url`, `url_visual` (optional, direct visual version), `tipo` (type), `aud` (audience: `cliente` client | `interna` internal | `conf` internal confidential | `colaborador` collaborator), `fecha` (document date, ISO), `creado` (created), `actualizado` (updated; ISO with time when known, `YYYY-MM-DDTHH:MM:SSZ`; otherwise the day only; otherwise empty), `autor` (author), `visibilidad` (visibility), `nota` (one-line note, no sensitive figures), `estado` (`vigente` current | `anterior` earlier version), `clave` (bool: the domain's entry document, one per domain).
+`dominio` (domain id), `titulo` (title), `url`, `url_visual` (optional, direct visual version), `tipo` (type), `aud` (audience: `cliente` client | `interna` internal | `conf` internal confidential | `colaborador` collaborator), `fecha` (document date, ISO), `creado` (created), `actualizado` (updated; ISO with time when known, `YYYY-MM-DDTHH:MM:SSZ`; otherwise the day only; otherwise empty), `autor` (author), `visibilidad` (visibility: `publico` | `organizacion` | `privado` | `personas` shared with specific people, as the tool reports it), `nota` (one-line note, no sensitive figures), `estado` (`vigente` current | `anterior` earlier version), `clave` (bool: the domain's entry document, one per domain).
 
 `tipo` uses one of these canonical values (the page also recognizes Spanish names and text without accents): `Document`, `Design`, `Animation`, `Design system`, `Spreadsheet`, `Presentation`, `Dashboard`, `Whiteboard`, `Tasks`, `Meeting`, `Code`, `Tool` or `Folder`. Map from the account's artifact types: Docs → Document; Design → Design; Motion → Animation; Design System → Design system; Sheets → Spreadsheet; Slides → Presentation; Dashboard → Dashboard; Whiteboard → Whiteboard; Tasks → Tasks.
 
@@ -148,12 +157,17 @@ After publishing, load the records with `ArtifactData` `batch` (up to 50 per cal
 For later small changes (renaming, icons, texts), republish the same file with `edits` (old_str/new_str pairs) instead of rewriting it, and update records with `update` and `if_version`.
 
 ## 7. Keep it alive
-The index is only useful if it is always updated. Give the user, and write into the project's rules doc if one exists, this rule ready to paste into the project instructions (you cannot edit them):
-"Required registration: every artifact, doc, design, file, minutes or repo you create or change for this project is registered in the same turn in the Project Index (<index URL>) with ArtifactData, collection items, using the project-index-manager skill. If you do not register it, the task is not done."
-Include in that doc the field format from section 4, including favorites and the canonical `tipo` values.
+The index is only useful if it is always updated. Do all of this in the same run:
+1. **Rules doc, always.** Write `claude/project-index.md` into the attached Claude Project with `project_write` (replace it if it exists). It holds the index URL and slug, the registration rule below, the domains with their ids, and the field format from section 4 (favorites and canonical `tipo` values included). Rule:
+   "Required registration: every artifact, doc, design, file, minutes or repo you create or change for this project is registered in the same turn in the Project Index (<index URL>) with ArtifactData (db_write on slug <slug>), collection items, using the project-index-manager skill. If you do not register it, the task is not done."
+2. **Project instructions.** The Projects tool can read the instructions but not write them. Give the user one fixed line to paste once, which points to the doc so it never needs editing again: "Before creating or changing anything in this project, read `claude/project-index.md` and follow its registration rule." If `project_info` shows the line is already there, say nothing.
+   If a browser tool that acts on the user's own claude.ai session is available (Claude in Chrome or the built-in browser), offer to paste it for them: open the project's settings on claude.ai, add the line at the end of the instructions without removing anything, and save only after the user approves the exact text. Never do it without that approval.
+3. **Scheduled tasks.** Offer both in one question, and create the ones the user accepts with the session's scheduling tools (never local cron):
+   - Daily audit: compare the project's chats and the account's recent artifacts (same discovery as section 1, items 5 and 6) against `items`, register what clearly belongs, and send the user a short list of doubtful items.
+   - Backup: export `items` (and `status` if it exists) as `index.json` into the team's context repo, in the project's folder, committing only when something changed. If the repo has no folder for the project, ask where it goes before creating the task.
 
 ## 8. Close
-Answer briefly: which index you created, how many records and domains, which classification judgments are worth reviewing (including `tipo` values you could not confirm against an artifact type) and what was left "To verify" (for example visibility). Do not paste the URL if the interface already shows the card.
+Answer briefly: which index you created, how many records and domains, which classification judgments are worth reviewing (including `tipo` values you could not confirm against an artifact type), the doubtful items to decide on, what was left "To verify" (for example visibility), the line to paste into the instructions (unless already there), and the scheduled tasks created or pending. Do not paste the URL if the interface already shows the card.
 
 ## Rules
 - Never delete records or invent metadata.
