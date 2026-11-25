@@ -18,10 +18,10 @@ Plugin `dashone-community`:
 | Skill | What it does |
 |---|---|
 | `diagnose` | Diagnoses a production bug, alert or incident: root cause with evidence, impact, severity, priority and a fix plan. |
-| `linear-plan` | Plans a piece of work on Opus 5.5 or Fable: 3 to 10 gap-closing questions, `diagnose` first when it is a problem, phases for epic-size work, acceptance criteria, and a Linear issue with sub-issues plus the plan as a Linear document. Minimizes what the human implementer has to do. |
 | `handoff` | Appends a handoff entry to `Handoff.md` so work can resume in a fresh session after `/clear`. |
 | `loop-instructions-builder` | Turns an approved plan into an execution-authorization prompt, checked against Claude Code's real hard limits. |
-| `loop-from-plan` | Takes an approved plan, creates one GitHub issue per phase, and launches its autonomous execution with `/loop`. Pairs with `loop-instructions-builder`. |
+| `plan-multi-agent` | Plans any piece of work on Opus 5.5 or Fable, for one agent or for a supervisor with several agents in parallel. It runs `diagnose` first when it is a problem, asks 3 to 10 gap-closing questions, and checks a backlog issue by issue against the code. It splits the work into units with dependencies, owned files, acceptance criteria, a production-write register and a merge gate, and minimizes what the human has to do. It picks normal or multi-agent mode and creates the Linear issue, sub-issues and plan document plus the GitHub ledger. Replaces `linear-plan`; `/linear-plan` still triggers it. |
+| `loop-from-plan` | Takes an approved plan, creates one GitHub issue per phase, and launches its autonomous execution with `/loop`. Detects whether the plan is normal (one agent per phase) or multi-agent (units in parallel under a supervisor, from `plan-multi-agent`) and runs the matching loop. Pairs with `loop-instructions-builder`. |
 | `spec-writer` | Turns an idea into a spec with user stories and acceptance criteria, ready for an AI agent. |
 | `doc-reader` | Finds and reads any document aloud-friendly, full or summarized. |
 | `landing-page-conversion-analysis` | Audits a landing page by walking it as real buyer personas and delivers prioritized findings. |
