@@ -1,7 +1,7 @@
 {
   "name": "dashone-community",
-  "version": "0.3.0",
-  "description": "General-purpose skills from DashOne that work for any team: incident diagnosis, planning into Linear, handoff notes, autonomous-run prompts, plan-to-loop execution, spec writing, document reading and landing page audits.",
+  "version": "0.4.0",
+  "description": "General-purpose skills from DashOne that work for any team: incident diagnosis, planning into Linear, handoff notes, autonomous-run prompts, plan-to-loop execution, spec writing, document reading, landing page audits and session close-out.",
   "author": {
     "name": "DashOne"
   },

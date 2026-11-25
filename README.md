@@ -25,6 +25,7 @@ Plugin `dashone-community`:
 | `spec-writer` | Turns an idea into a spec with user stories and acceptance criteria, ready for an AI agent. |
 | `doc-reader` | Finds and reads any document aloud-friendly, full or summarized. |
 | `landing-page-conversion-analysis` | Audits a landing page by walking it as real buyer personas and delivers prioritized findings. |
+| `close-session` | Closes a work session: commits and pushes code, merges green PRs, closes issues and finished epics, deletes merged and session-owned branches, registers new artifacts in the Project Index, then archives the session. `--dry-run` only lists what it would do. |
 
 ## Plugin project-management
 
