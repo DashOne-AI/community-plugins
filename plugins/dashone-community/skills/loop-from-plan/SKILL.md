@@ -1,6 +1,6 @@
 ---
 name: loop-from-plan
-description: Takes an approved plan and launches its autonomous execution in one move. It builds the tailored execution-authorization prompt (via loop-instructions-builder's analysis), ensures every phase/slice has a matching GitHub issue (cross-repo issues with cross-reference when a slice touches more than one repo), and immediately starts /loop with that prompt, using the plan's acceptance criteria as the loop's termination condition. Works with requests in Spanish or English. Use when the user wants to go from "plan approved" straight to "running in a loop" without manually copy-pasting the generated prompt into /loop, or without manually creating tracking issues first. Trigger on requests like "ejecuta este plan en loop", "arranca el loop con este plan", "corre el plan de forma autónoma hasta que se cumplan los ACs", "/loop-from-plan", or the English equivalents. Takes an optional interval for /loop (e.g. "10m"); omitted means self-paced.
+description: Takes an approved plan and launches its autonomous execution in one move. It builds the tailored execution-authorization prompt (via loop-instructions-builder's analysis), ensures every phase/slice has a matching GitHub issue (cross-repo issues with cross-reference when a slice touches more than one repo), and immediately starts /loop with that prompt, using the plan's acceptance criteria as the loop's termination condition. It first classifies the plan as normal (sequential, one agent per phase) or multi-agent (units with dependencies run by several agents in parallel under a supervisor, as written by plan-multi-agent) and launches the matching loop. Works with requests in Spanish or English. Use when the user wants to go from "plan approved" straight to "running in a loop" without manually copy-pasting the generated prompt into /loop, or without manually creating tracking issues first. Trigger on requests like "ejecuta este plan en loop", "arranca el loop con este plan", "corre el plan de forma autónoma hasta que se cumplan los ACs", "/loop-from-plan", or the English equivalents. Takes an optional interval for /loop (e.g. "10m"); omitted means self-paced.
 ---
 
 # Loop From Plan
@@ -10,6 +10,20 @@ description: Takes an approved plan and launches its autonomous execution in one
 `loop-instructions-builder` produces an execution-authorization prompt and stops, and the user then pastes it into `/loop` by hand. This skill removes that manual hop: same analysis, same prompt quality, but the output is **fed directly into `/loop`** and execution starts immediately. It also guarantees the plan is tracked as GitHub issues before any code gets touched (one issue per phase/slice, cross-repo issues cross-referenced when a slice spans more than one repo), and wires per-iteration issue verification into the loop prompt itself.
 
 Pipeline: find plan → analyze blockers → ensure one GitHub issue per phase/slice (cross-repo if a slice touches more than one repo) → build prompt → adapt for loop execution (embeds issue-verification instructions) → invoke `/loop`.
+
+Before all of that, Step 0 classifies the plan as **normal** or **multi-agent**. Everything below describes the normal plan; the section "Multi-agent plans" lists exactly what changes for the other one.
+
+## Step 0: Normal plan or multi-agent plan
+
+Classify the plan before anything else. A plan written by `plan-multi-agent` says it in its marker: `Execution mode: normal` or `Execution mode: multi-agent`, followed by its tracker. The marker wins. Without a marker, it is **multi-agent** only when one of these is true:
+
+1. Its first lines contain `Execution mode: multi-agent` together with a tracking issue (a marker written by hand).
+2. It names a tracking issue as the ledger and its units have `depends_on` and owned files.
+3. The user asks for it explicitly ("multi-agent", "several agents in parallel", "varios agentes en paralelo").
+
+Anything else is **normal**. For a normal plan written by `plan-multi-agent`, Step 2 reuses the Linear and GitHub issues it created instead of creating new ones. If a plan has independent-looking phases but none of the three signals, stay normal and say in the pre-launch summary that it could run in parallel once it is planned with `plan-multi-agent`. Never infer parallelism silently: without owned-files analysis, parallel agents collide on the same files.
+
+For a normal plan, continue with Step 1 unchanged. For a multi-agent plan, follow Steps 1 to 4 with the changes in "Multi-agent plans" below.
 
 ## Step 1: Load the builder and run its analysis
 
@@ -139,6 +153,37 @@ Invoke the `loop` skill (Skill tool) with args = `[interval] <adapted prompt>`:
 
 Before launching, show the user, **outside** any code block, a summary covering: what's authorized, what's carved out as theirs (if anything), the issues created or reused per phase (`repo#number` list, flagging any cross-repo pairs), and the ACs that will stop the loop. Then launch immediately; do not ask for confirmation (the user invoked this skill precisely to skip that hop). Exception: if Step 1's analysis found a hard-blocked step that the ENTIRE plan depends on, or Step 2 could not get a usable main repo (`gh` unauthenticated, target not a git repo), don't start the loop. Surface the blocker first and stop.
 
+## Multi-agent plans
+
+The normal flow delegates one phase at a time. A multi-agent plan has a **supervisor** (the main session in the loop) and **units** that several agents implement at the same time. These are the only changes; the builder analysis (Step 1), the termination-by-ACs rule, the no-progress guard and the checkpoint stay as written.
+
+**M1. The ledger is the plan's tracker (replaces Step 2).** Read the plan from the tracker the marker names: the Linear parent issue and its plan document, and the GitHub tracking issue. `plan-multi-agent` already created one Linear sub-issue and one GitHub issue per unit, cross-linked: reuse them, and only create what is missing, searching first as in Step 2. The state of every unit is **rebuilt on every iteration** from the GitHub issues and their PRs, never from memory: merged PR = done, open PR = in review, issue with no PR = todo, waiting on the user = blocked. When a unit is merged, close its GitHub issue with the evidence and move its Linear sub-issue to Done with a link to the PR.
+
+**M2. The loop prompt is a supervisor tick (replaces items 4 and 5 of Step 3).** Embed the plan's units table (unit → issue, `depends_on`, owned files, model, reviewer yes/no), the concurrency cap, the branch naming (`<session branch>-<unit>`) and the agent brief verbatim from the plan. Each iteration:
+
+```
+### Supervisor tick (every iteration)
+1. Reconcile: rebuild the ledger from the tracker and from the agents that finished.
+2. Merge: every unit in review that passes the merge gate below; then close its issue
+   with the evidence and link the PR. If a PR conflicts, merge the default branch into its
+   head (no rebase, no force-push) and run the tests again first.
+3. Launch: units whose dependencies are done, up to <cap> at once, each as a background
+   agent with isolation: "worktree" and the plan's agent brief. Smallest unit first.
+4. Ask the user about everything blocked on them, grouped, at most one question per
+   iteration. Unblocked units keep going.
+5. Stop only when every unit is done, or what remains is blocked on the user.
+```
+
+**M3. The merge gate is the plan's, copied literally.** Typically: the full suite green on the default branch merged with the PR head, the unit's replay or journey cases pass, the PR has its evidence and "not verified" sections, no unapplied migration, backfill or flag, and no conflict. Units the plan flags for review also need a separate reviewer agent that receives only the diff and the done-criteria. Only merge when the plan says the supervisor merges; otherwise leave the PRs ready and list them.
+
+**M4. Authorization from the production-write register.** The hard carve-outs of the prompt are the plan's production-write register: migrations, backfills, flags, secrets, deploys and any message sent on the user's behalf. Agents never apply them. They appear in the BLOCKED block every iteration, grouped, until the user answers. Add to the authorization: pushes only to the unit branches, merges only through the gate.
+
+**M5. Failure and escalation.** Per unit: two failed attempts, then reassign once to the stronger agent with what was tried, then BLOCKED with the diagnosis. A unit whose premise turned out false is closed with the evidence and not built. Two units that need the same file are a plan defect: stop launching the later one and report it.
+
+**M6. Launch (replaces the interval rule of Step 4).** Self-paced `/loop` with no fixed interval: finished background agents wake the loop, and a 20 to 30 minute wake-up is only the fallback. The pre-launch summary adds: the concurrency cap, the units and waves, the merge gate, the production-write register, and what is blocked on the user. A timer set inside a container dies with it; if the run must survive a restart, say so and offer a pending scheduled wake-up instead.
+
+**M7. Checkpoint additions.** Besides the standard fields, the checkpoint lists the units in flight (unit, agent, branch, PR). On resume, check `gh pr list` and the branches before launching anything, so a unit that already has an agent or a PR is never launched twice. The ledger itself is still rebuilt from the tracker.
+
 ## Pauses and compaction
 
 A plan run in a loop lasts long enough to fill the conversation context. This section makes every pause a safe point to compact, so the plan, the progress and the loop's behavior survive `/compact`. It adds no pause or termination condition and changes none of the existing ones.
@@ -228,3 +273,5 @@ Write it in the user's language:
 - Writing that the skill or the loop runs `/compact`. Only the user can.
 - Telling the user it is safe to compact before the checkpoint is written, or with a step half done.
 - Launching the loop without the checkpoint-and-resume block, or resuming after a compaction from memory instead of from the checkpoint.
+- Treating a plan as multi-agent without the marker or the owned-files analysis, or treating a marked multi-agent plan as normal and running its units one by one.
+- In a multi-agent run: launching a unit before its dependencies are done, letting two agents own the same file, merging without the gate, letting an agent apply a migration, backfill or flag, or taking the ledger from memory instead of from the tracker.
